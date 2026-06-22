@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+coverage/
+.cache/
+.backend/data/
+*.db
+.angular/
+frontend/.angular/
+admin/.angular/
+backend/uploads/

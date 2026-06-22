@@ -1,0 +1,15 @@
+{
+  "name": "point-vetements",
+  "version": "1.0.0",
+  "description": "E-commerce vetements - Front Angular + Back Node.js + MongoDB",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install && cd ../admin && npm install",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && ng serve",
+    "start:admin": "cd admin && ng serve",
+    "start:all": "concurrently \"npm run start:backend\" \"npm run start:frontend\" \"npm run start:admin\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
