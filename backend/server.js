@@ -52,17 +52,17 @@ app.get('/api/health', (req, res) => {
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist', 'point-vetements-frontend');
 const adminDist = path.join(__dirname, '..', 'admin', 'dist', 'point-vetements-admin');
 
-if (fs.existsSync(frontendDist)) {
-  app.use(express.static(frontendDist));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'));
-  });
-}
-
 if (fs.existsSync(adminDist)) {
   app.use('/admin', express.static(adminDist));
   app.get('/admin/*', (req, res) => {
     res.sendFile(path.join(adminDist, 'index.html'));
+  });
+}
+
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
   });
 }
 
