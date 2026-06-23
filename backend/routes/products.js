@@ -7,6 +7,24 @@ const { getDb, parseProductRow } = require('../db');
 const auth = require('../middleware/auth');
 const { upload, uploadToImgbb, deleteFromImgbb } = require('../imageUpload');
 
+const productsCache = new Map();
+const PRODUCTS_CACHE_TTL = 60000;
+
+function getProductsCache(key) {
+  const entry = productsCache.get(key);
+  if (entry && Date.now() - entry.ts < PRODUCTS_CACHE_TTL) return entry.data;
+  productsCache.delete(key);
+  return null;
+}
+
+function setProductsCache(key, data) {
+  productsCache.set(key, { data, ts: Date.now() });
+}
+
+function invalidateProductsCache() {
+  productsCache.clear();
+}
+
 router.get('/', auth, async (req, res) => {
   try {
     const { categorie, sexe, marque, disponible, promotion, search, page = 1, limit = 50, sort = 'dateAjout', order = 'desc' } = req.query;
@@ -52,7 +70,15 @@ router.get('/', auth, async (req, res) => {
 
 router.get('/public', async (req, res) => {
   try {
-    const { categorie, sexe, marque, disponible, promotion } = req.query;
+    const { categorie, sexe, marque, disponible, promotion, page = 1, limit = 50, sort = 'dateAjout', order = 'desc' } = req.query;
+    const cacheKey = `public:${categorie || ''}:${sexe || ''}:${marque || ''}:${disponible || ''}:${promotion || ''}:${page}:${limit}:${sort}:${order}`;
+
+    const cached = getProductsCache(cacheKey);
+    if (cached) {
+      res.set('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const db = getDb();
     let where = [];
     let args = [];
@@ -64,8 +90,27 @@ router.get('/public', async (req, res) => {
     if (promotion === 'true') { where.push('promotions > 0'); }
 
     const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
-    const result = await db.execute({ sql: `SELECT * FROM products ${whereClause} ORDER BY dateAjout DESC`, args });
-    res.json(result.rows.map(parseProductRow));
+    const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+    const allowedSorts = ['dateAjout', 'prix', 'nom'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'dateAjout';
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
+
+    const [countResult, dataResult] = await Promise.all([
+      db.execute({ sql: `SELECT COUNT(*) as total FROM products ${whereClause}`, args }),
+      db.execute({ sql: `SELECT * FROM products ${whereClause} ORDER BY ${sortField} ${sortOrder} LIMIT ? OFFSET ?`, args: [...args, limitNum, offset] })
+    ]);
+
+    const total = countResult.rows[0].total;
+    const result = {
+      data: dataResult.rows.map(parseProductRow),
+      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) }
+    };
+
+    setProductsCache(cacheKey, result);
+    res.set('X-Cache', 'MISS');
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -125,6 +170,7 @@ router.post('/', auth, upload.array('images', 10), async (req, res) => {
     });
 
     const result = await db.execute({ sql: 'SELECT * FROM products WHERE _id = ?', args: [id] });
+    invalidateProductsCache();
     res.status(201).json(parseProductRow(result.rows[0]));
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -186,6 +232,7 @@ router.put('/:id', auth, upload.array('images', 10), async (req, res) => {
     });
 
     const result = await db.execute({ sql: 'SELECT * FROM products WHERE _id = ?', args: [req.params.id] });
+    invalidateProductsCache();
     res.json(parseProductRow(result.rows[0]));
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -204,6 +251,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (product.images && product.images.length > 0) {
       product.images.forEach(img => deleteFromImgbb(img));
     }
+    invalidateProductsCache();
     res.json({ message: 'Produit supprime' });
   } catch (err) {
     res.status(500).json({ error: err.message });

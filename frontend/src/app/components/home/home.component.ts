@@ -48,7 +48,7 @@ import { Product } from '../../models/product.model';
         </div>
 
         <div class="products-grid" *ngIf="filteredProducts.length > 0">
-          <div class="product-card card" *ngFor="let product of filteredProducts; let i = index"
+          <div class="product-card card" *ngFor="let product of filteredProducts; let i = index; trackBy: trackByProduct"
                [style.animation-delay]="i * 0.1 + 's'">
             <a [routerLink]="['/produit', product._id]" class="product-link">
               <div class="product-image">
@@ -70,7 +70,7 @@ import { Product } from '../../models/product.model';
                 </div>
                 <h3 class="product-name">{{ product.nom }}</h3>
                 <div class="product-colors" *ngIf="product.couleurs && product.couleurs.length > 0">
-                  <span *ngFor="let c of product.couleurs" class="product-color-dot" [style.background]="c"></span>
+                  <span *ngFor="let c of product.couleurs; trackBy: trackByColor" class="product-color-dot" [style.background]="c"></span>
                 </div>
                 <p class="product-color" *ngIf="!product.couleurs || product.couleurs.length === 0">{{ product.couleur }}</p>
                 <div class="product-pricing">
@@ -82,7 +82,7 @@ import { Product } from '../../models/product.model';
                   </span>
                 </div>
                 <div class="product-sizes">
-                  <span *ngFor="let taille of product.tailles" class="size-tag">{{ taille }}</span>
+                  <span *ngFor="let taille of product.tailles; trackBy: trackBySize" class="size-tag">{{ taille }}</span>
                 </div>
                 <div class="product-stock" [class.out-stock]="product.quantite === 0">
                   <i class="fas" [class.fa-check-circle]="product.quantite > 0" [class.fa-times-circle]="product.quantite === 0"></i>
@@ -511,5 +511,17 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   onImageError(event: any) {
     event.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop';
+  }
+
+  trackByProduct(index: number, product: Product): string {
+    return product._id;
+  }
+
+  trackByColor(index: number, color: string): string {
+    return color;
+  }
+
+  trackBySize(index: number, size: string): string {
+    return size;
   }
 }

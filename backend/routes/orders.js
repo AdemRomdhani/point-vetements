@@ -7,16 +7,25 @@ const auth = require('../middleware/auth');
 router.get('/stats/summary', auth, async (req, res) => {
   try {
     const db = getDb();
-    const allOrders = (await db.execute('SELECT * FROM orders')).rows.map(parseOrderRow);
-    const total = allOrders.length;
-    const enAttente = allOrders.filter(o => o.statut === 'en_attente').length;
-    const enPreparation = allOrders.filter(o => o.statut === 'en_preparation').length;
-    const expedie = allOrders.filter(o => o.statut === 'expedie').length;
-    const livre = allOrders.filter(o => o.statut === 'livre').length;
-    const annule = allOrders.filter(o => o.statut === 'annule').length;
-    const revenuTotal = allOrders.filter(o => o.statut !== 'annule').reduce((s, o) => s + o.montantTotal, 0);
+    const [totalResult, statusResult, revenueResult] = await Promise.all([
+      db.execute('SELECT COUNT(*) as total FROM orders'),
+      db.execute('SELECT statut, COUNT(*) as count FROM orders GROUP BY statut'),
+      db.execute("SELECT COALESCE(SUM(montantTotal), 0) as revenuTotal FROM orders WHERE statut != 'annule'")
+    ]);
 
-    res.json({ total, enAttente, enPreparation, expedie, livre, annule, revenuTotal });
+    const total = totalResult.rows[0]?.total || 0;
+    const statusMap = {};
+    statusResult.rows.forEach(r => { statusMap[r.statut] = r.count; });
+
+    res.json({
+      total,
+      enAttente: statusMap['en_attente'] || 0,
+      enPreparation: statusMap['en_preparation'] || 0,
+      expedie: statusMap['expedie'] || 0,
+      livre: statusMap['livre'] || 0,
+      annule: statusMap['annule'] || 0,
+      revenuTotal: revenueResult.rows[0]?.revenuTotal || 0
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

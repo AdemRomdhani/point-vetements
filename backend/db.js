@@ -52,7 +52,17 @@ async function initDb() {
     )
   `);
 
-  console.log('Base de donnees initialisee');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_categorie ON products(categorie)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_sexe ON products(sexe)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_marque ON products(marque)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_disponible ON products(disponible)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_promotions ON products(promotions)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_dateAjout ON products(dateAjout)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_products_nom ON products(nom)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_orders_statut ON orders(statut)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_orders_dateCommande ON orders(dateCommande)');
+
+  console.log('Base de donnees initialisee avec index');
 }
 
 function parseJsonField(field) {

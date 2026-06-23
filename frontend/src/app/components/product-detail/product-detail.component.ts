@@ -26,8 +26,8 @@ import { Product } from '../../models/product.model';
             <div class="slider" *ngIf="product">
               <div class="slider-viewport" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd($event)">
                 <div class="slider-track" [style.transform]="'translateX(-' + currentSlideIndex * 100 + '%)'">
-                  <div class="slider-slide" *ngFor="let img of product.images">
-                    <img [src]="getImageUrl(img)" [alt]="product.nom" (error)="onImageError($event)">
+                  <div class="slider-slide" *ngFor="let img of product.images; trackBy: trackByImage">
+                    <img [src]="getImageUrl(img)" [alt]="product.nom" loading="lazy" (error)="onImageError($event)">
                   </div>
                   <div class="slider-slide" *ngIf="product.images.length === 0">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='750'%3E%3Crect fill='%23F5F0E8' width='600' height='750'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%231A1A1A'%3EProduit%3C/text%3E%3C/svg%3E" [alt]="product.nom">
@@ -49,11 +49,12 @@ import { Product } from '../../models/product.model';
               </div>
             </div>
             <div class="thumbnails" *ngIf="product.images.length > 1">
-              <img *ngFor="let img of product.images; let i = index"
+              <img *ngFor="let img of product.images; let i = index; trackBy: trackByImage"
                    [src]="getImageUrl(img)"
                    [alt]="product.nom + ' ' + (i+1)"
                    [class.active]="i === currentSlideIndex"
                    (click)="goToSlide(i)"
+                   loading="lazy"
                    (error)="onImageError($event)">
             </div>
           </div>
@@ -180,7 +181,7 @@ import { Product } from '../../models/product.model';
           <div class="order-summary">
             <h3>Resume de la commande</h3>
             <div class="order-item">
-              <img [src]="getImageUrl(product.images[0])" [alt]="product.nom" (error)="onImageError($event)">
+              <img [src]="getImageUrl(product.images[0])" [alt]="product.nom" loading="lazy" (error)="onImageError($event)">
               <div>
                 <p class="item-name">{{ product.nom }}</p>
                 <p class="item-detail">Taille: {{ selectedTaille }}<span *ngIf="selectedCouleur"> | Couleur: {{ selectedCouleur }}</span> | Qte: {{ quantity }}</p>
@@ -656,5 +657,9 @@ export class ProductDetailComponent implements OnInit {
 
   onImageError(event: any) {
     event.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop';
+  }
+
+  trackByImage(index: number, item: string): string {
+    return item;
   }
 }
