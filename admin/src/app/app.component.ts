@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -40,7 +41,7 @@ import { AuthService } from './services/auth.service';
             <i class="fas fa-shopping-cart"></i>
             <span>Commandes</span>
           </a>
-          <a href="/" target="_blank" class="nav-item" (click)="closeMobileSidebar()">
+          <a [href]="frontendUrl" target="_blank" class="nav-item" (click)="closeMobileSidebar()">
             <i class="fas fa-external-link-alt"></i>
             <span>Voir la boutique</span>
           </a>
@@ -300,6 +301,7 @@ import { AuthService } from './services/auth.service';
 export class AppComponent {
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
+  frontendUrl = environment.frontendUrl || '/';
   isLoggedIn = false;
 
   constructor(private auth: AuthService, private router: Router) {

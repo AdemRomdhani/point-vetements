@@ -28,7 +28,7 @@ const allowedOrigins = [
 app.use(compression());
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(null, true);
@@ -48,23 +48,6 @@ app.use('/api/analytics', analyticsRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API fonctionne' });
 });
-
-const frontendDist = path.join(__dirname, '..', 'frontend', 'dist', 'point-vetements-frontend');
-const adminDist = path.join(__dirname, '..', 'admin', 'dist', 'point-vetements-admin');
-
-if (fs.existsSync(adminDist)) {
-  app.use('/admin', express.static(adminDist));
-  app.get('/admin/*', (req, res) => {
-    res.sendFile(path.join(adminDist, 'index.html'));
-  });
-}
-
-if (fs.existsSync(frontendDist)) {
-  app.use(express.static(frontendDist));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'));
-  });
-}
 
 const multer = require('multer');
 
