@@ -394,7 +394,7 @@ export class ProductFormComponent implements OnInit {
   imageFiles: File[] = [];
   imagePreviews: string[] = [];
   existingImages: string[] = [];
-  allTaillesVetement = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+  allTaillesVetement = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
   allTaillesChaussure = Array.from({ length: 15 }, (_, i) => String(i + 36));
   allTailles = this.allTaillesVetement;
   allCouleurs = [

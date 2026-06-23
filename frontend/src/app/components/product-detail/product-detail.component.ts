@@ -120,7 +120,7 @@ import { Product } from '../../models/product.model';
               <p>{{ product.description }}</p>
             </div>
 
-            <div class="sizes-section">
+            <div class="sizes-section" *ngIf="product.categorie !== 'accessoire'">
               <h3>Taille</h3>
               <div class="sizes">
                 <button *ngFor="let taille of product.tailles"
