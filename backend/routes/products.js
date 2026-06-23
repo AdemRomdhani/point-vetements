@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { getDb, parseProductRow } = require('../db');
 const auth = require('../middleware/auth');
-const { upload, uploadToImgbb, deleteFromImgbb } = require('./imageUpload');
+const { upload, uploadToImgbb, deleteFromImgbb } = require('../imageUpload');
 
 router.get('/', auth, async (req, res) => {
   try {
