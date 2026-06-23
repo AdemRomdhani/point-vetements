@@ -102,7 +102,7 @@ import { ApiService, Product } from '../../services/api.service';
           <tbody>
             <tr *ngFor="let product of filteredProducts; trackBy: trackById">
               <td>
-                <img [src]="getImageUrl(product.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2750%27 height=%2750%27%3E%3Crect fill=%27%23F5F0E8%27 width=%2750%27 height=%2750%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%231A1A1A%27%3EP%3C/text%3E%3C/svg%3E'
+                <img [src]="getImageUrl(product.images[0])"
                      class="product-thumb" [alt]="product.nom"
                      (error)="onImageError($event)">
               </td>
@@ -150,7 +150,7 @@ import { ApiService, Product } from '../../services/api.service';
         <div class="mobile-cards">
           <div class="product-card" *ngFor="let product of filteredProducts; trackBy: trackById">
             <div class="card-header">
-              <img [src]="getImageUrl(product.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2780%27%3E%3Crect fill=%27%23F5F0E8%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2724%27 fill=%27%231A1A1A%27%3EP%3C/text%3E%3C/svg%3E'"
+              <img [src]="getImageUrl(product.images[0])"
                    class="card-thumb" [alt]="product.nom"
                    (error)="onImageError($event)">
               <div class="card-info">
@@ -421,7 +421,9 @@ export class DashboardComponent implements OnInit {
     return this.api.getImageUrl(image);
   }
 
+  private placeholderSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect fill='%23F5F0E8' width='80' height='80'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%231A1A1A'%3EP%3C/text%3E%3C/svg%3E";
+
   onImageError(event: any) {
-    event.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop';
+    event.target.src = this.placeholderSvg;
   }
 }

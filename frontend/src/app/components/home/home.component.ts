@@ -52,7 +52,7 @@ import { Product } from '../../models/product.model';
                [style.animation-delay]="i * 0.1 + 's'">
             <a [routerLink]="['/produit', product._id]" class="product-link">
               <div class="product-image">
-                <img [src]="getImageUrl(product.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27500%27%3E%3Crect fill=%27%23F5F0E8%27 width=%27400%27 height=%27500%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2720%27 fill=%27%231A1A1A%27%3EProduit%3C/text%3E%3C/svg%3E'"
+                <img [src]="getImageUrl(product.images[0])"
                      [alt]="product.nom" loading="lazy"
                      (error)="onImageError($event)">
                 <div class="product-badges">

@@ -102,7 +102,7 @@ import { ApiService, Order } from '../../services/api.service';
             <div class="order-items">
               <h4><i class="fas fa-box"></i> Produits</h4>
               <div class="item" *ngFor="let item of order.produits">
-                <img [src]="getImageUrl(item.image) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2750%27 height=%2750%27%3E%3Crect fill=%27%23F5F0E8%27 width=%2750%27 height=%2750%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%231A1A1A%27%3EP%3C/text%3E%3C/svg%3E'" [alt]="item.nom" (error)="onImageError($event)">
+                <img [src]="getImageUrl(item.image)" [alt]="item.nom" (error)="onImageError($event)">
                 <div class="item-details">
                   <span class="item-name">{{ item.nom }}</span>
                   <span class="item-meta">Taille: {{ item.taille }}<span *ngIf="item.couleur"> | Couleur: <span class="order-color-dot" [style.background]="item.couleur"></span> {{ getColorName(item.couleur) }}</span> | Qte: {{ item.quantite }}</span>
