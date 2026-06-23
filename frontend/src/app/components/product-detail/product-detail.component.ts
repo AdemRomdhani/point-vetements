@@ -30,7 +30,7 @@ import { Product } from '../../models/product.model';
                     <img [src]="getImageUrl(img)" [alt]="product.nom" (error)="onImageError($event)">
                   </div>
                   <div class="slider-slide" *ngIf="product.images.length === 0">
-                    <img src="https://via.placeholder.com/600x750/F5F0E8/1A1A1A?text=Produit" [alt]="product.nom">
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27600%27 height=%27750%27%3E%3Crect fill=%27%23F5F0E8%27 width=%27600%27 height=%27750%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2724%27 fill=%27%231A1A1A%27%3EProduit%3C/text%3E%3C/svg%3E" [alt]="product.nom">
                   </div>
                 </div>
               </div>
@@ -180,7 +180,7 @@ import { Product } from '../../models/product.model';
           <div class="order-summary">
             <h3>Resume de la commande</h3>
             <div class="order-item">
-              <img [src]="getImageUrl(product.images[0]) || 'https://via.placeholder.com/60x60'" [alt]="product.nom" (error)="onImageError($event)">
+              <img [src]="getImageUrl(product.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2760%27 height=%2760%27%3E%3Crect fill=%27%23F5F0E8%27 width=%2760%27 height=%2760%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%231A1A1A%27%3EP%3C/text%3E%3C/svg%3E'" [alt]="product.nom" (error)="onImageError($event)">
               <div>
                 <p class="item-name">{{ product.nom }}</p>
                 <p class="item-detail">Taille: {{ selectedTaille }}<span *ngIf="selectedCouleur"> | Couleur: {{ selectedCouleur }}</span> | Qte: {{ quantity }}</p>

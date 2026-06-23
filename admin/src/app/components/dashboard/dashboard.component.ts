@@ -102,7 +102,7 @@ import { ApiService, Product } from '../../services/api.service';
           <tbody>
             <tr *ngFor="let product of filteredProducts; trackBy: trackById">
               <td>
-                <img [src]="getImageUrl(product.images[0]) || 'https://via.placeholder.com/50x50/F5F0E8/1A1A1A?text=P'"
+                <img [src]="getImageUrl(product.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2750%27 height=%2750%27%3E%3Crect fill=%27%23F5F0E8%27 width=%2750%27 height=%2750%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2718%27 fill=%27%231A1A1A%27%3EP%3C/text%3E%3C/svg%3E'
                      class="product-thumb" [alt]="product.nom"
                      (error)="onImageError($event)">
               </td>
@@ -150,7 +150,7 @@ import { ApiService, Product } from '../../services/api.service';
         <div class="mobile-cards">
           <div class="product-card" *ngFor="let product of filteredProducts; trackBy: trackById">
             <div class="card-header">
-              <img [src]="getImageUrl(product.images[0]) || 'https://via.placeholder.com/80x80/F5F0E8/1A1A1A?text=P'"
+              <img [src]="getImageUrl(product.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2780%27%3E%3Crect fill=%27%23F5F0E8%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2724%27 fill=%27%231A1A1A%27%3EP%3C/text%3E%3C/svg%3E'"
                    class="card-thumb" [alt]="product.nom"
                    (error)="onImageError($event)">
               <div class="card-info">
