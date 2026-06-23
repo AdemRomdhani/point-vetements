@@ -34,7 +34,7 @@ import { ApiService, Product } from '../../services/api.service';
             </div>
             <div class="form-group">
               <label>Categorie *</label>
-              <select [(ngModel)]="product.categorie" name="categorie" required>
+              <select [(ngModel)]="product.categorie" name="categorie" required (change)="onCategorieChange()">
                 <option value="">Selectionner</option>
                 <option value="homme">Homme</option>
                 <option value="femme">Femme</option>
@@ -394,7 +394,9 @@ export class ProductFormComponent implements OnInit {
   imageFiles: File[] = [];
   imagePreviews: string[] = [];
   existingImages: string[] = [];
-  allTailles = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+  allTaillesVetement = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+  allTaillesChaussure = Array.from({ length: 15 }, (_, i) => String(i + 36));
+  allTailles = this.allTaillesVetement;
   allCouleurs = [
     '#1A1A1A', '#FFFFFF', '#808080', '#C62828', '#1565C0',
     '#2E7D32', '#E91E63', '#FFC107', '#FF5722', '#795548',
@@ -448,6 +450,12 @@ export class ProductFormComponent implements OnInit {
     } else {
       this.product.tailles.push(taille);
     }
+  }
+
+  onCategorieChange() {
+    const isChaussure = this.product.categorie === 'chaussure';
+    this.allTailles = isChaussure ? this.allTaillesChaussure : this.allTaillesVetement;
+    this.product.tailles = [];
   }
 
   toggleCouleur(couleur: string) {
