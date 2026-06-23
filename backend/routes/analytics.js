@@ -28,80 +28,80 @@ router.get('/dashboard', auth, async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const sixtyDaysAgo = new Date(now);
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
-    const sixtyDaysAgoStr = sixtyDaysAgo.toISOString();
 
-    const [totalProductsResult, totalOrdersResult, statusCountsResult, revenueCurrentResult, revenuePrevResult, lowStockResult, recentOrdersResult] = await Promise.all([
-      db.execute('SELECT COUNT(*) as total FROM products'),
-      db.execute('SELECT COUNT(*) as total FROM orders'),
-      db.execute('SELECT statut, COUNT(*) as count FROM orders GROUP BY statut'),
-      db.execute({ sql: 'SELECT COALESCE(SUM(montantTotal), 0) as revenue, COUNT(*) as orders FROM orders WHERE dateCommande >= ? AND statut != ?', args: [thirtyDaysAgoStr, 'annule'] }),
-      db.execute({ sql: 'SELECT COALESCE(SUM(montantTotal), 0) as revenue, COUNT(*) as orders FROM orders WHERE dateCommande >= ? AND dateCommande < ? AND statut != ?', args: [sixtyDaysAgoStr, thirtyDaysAgoStr, 'annule'] }),
-      db.execute({ sql: 'SELECT nom, quantite, images FROM products WHERE quantite <= 5 AND quantite > 0 AND disponible = 1 ORDER BY quantite ASC LIMIT 5' }),
-      db.execute({ sql: 'SELECT _id, produits, client, montantTotal, fraisLivraison, statut, dateCommande, dateLivraison, notes FROM orders ORDER BY dateCommande DESC LIMIT 5' })
-    ]);
+    const productsResult = await db.execute('SELECT * FROM products');
+    const ordersResult = await db.execute('SELECT * FROM orders');
 
-    const totalProducts = totalProductsResult.rows[0]?.total || 0;
-    const totalOrders = totalOrdersResult.rows[0]?.total || 0;
+    const allProducts = productsResult.rows.map(parseProductRow);
+    const allOrders = ordersResult.rows.map(parseOrderRow);
 
-    const statusMap = {};
-    (statusCountsResult.rows || []).forEach(r => { statusMap[r.statut] = r.count; });
+    const totalProducts = allProducts.length;
+    const totalOrders = allOrders.length;
 
-    const currentRevenue = revenueCurrentResult.rows[0]?.revenue || 0;
-    const currentOrders = revenueCurrentResult.rows[0]?.orders || 0;
-    const previousRevenue = revenuePrevResult.rows[0]?.revenue || 0;
-    const previousOrders = revenuePrevResult.rows[0]?.orders || 0;
+    const lowStockProducts = allProducts
+      .filter(function(p) { return p.quantite <= 5 && p.quantite > 0 && p.disponible; })
+      .sort(function(a, b) { return a.quantite - b.quantite; })
+      .slice(0, 5)
+      .map(function(p) { return { nom: p.nom, quantite: p.quantite, images: p.images }; });
 
-    const revenueGrowth = previousRevenue > 0
+    var statusCounts = {};
+    allOrders.forEach(function(o) { statusCounts[o.statut] = (statusCounts[o.statut] || 0) + 1; });
+
+    var revenueLast30 = allOrders.filter(function(o) { return new Date(o.dateCommande) >= thirtyDaysAgo && o.statut !== 'annule'; });
+    var currentRevenue = revenueLast30.reduce(function(s, o) { return s + o.montantTotal; }, 0);
+    var currentOrders = revenueLast30.length;
+
+    var revenuePrev30 = allOrders.filter(function(o) { return new Date(o.dateCommande) >= sixtyDaysAgo && new Date(o.dateCommande) < thirtyDaysAgo && o.statut !== 'annule'; });
+    var previousRevenue = revenuePrev30.reduce(function(s, o) { return s + o.montantTotal; }, 0);
+    var previousOrders = revenuePrev30.length;
+
+    var revenueGrowth = previousRevenue > 0
       ? Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100)
       : currentRevenue > 0 ? 100 : 0;
-    const orderGrowth = previousOrders > 0
+    var orderGrowth = previousOrders > 0
       ? Math.round(((currentOrders - previousOrders) / previousOrders) * 100)
       : currentOrders > 0 ? 100 : 0;
-    const avgOrderValue = currentOrders > 0 ? Math.round(currentRevenue / currentOrders) : 0;
+    var avgOrderValue = currentOrders > 0 ? Math.round(currentRevenue / currentOrders) : 0;
 
-    const recentOrders = (recentOrdersResult.rows || []).map(parseOrderRow);
+    var recentOrders = allOrders.sort(function(a, b) { return new Date(b.dateCommande) - new Date(a.dateCommande); }).slice(0, 5);
 
-    const lowStockProducts = (lowStockResult.rows || []).map(r => ({
-      nom: r.nom, quantite: r.quantite, images: (() => { try { return JSON.parse(r.images); } catch { return []; } })()
-    }));
-
-    const allOrdersForAgg = (await db.execute({ sql: 'SELECT produits, client FROM orders WHERE statut != ?', args: ['annule'] })).rows || [];
-
-    const productSales = {};
-    const customerPhones = new Set();
-    allOrdersForAgg.forEach(order => {
-      const produits = (() => { try { return JSON.parse(order.produits); } catch { return []; } })();
-      produits.forEach(item => {
-        const pid = item.produit;
+    var productSales = {};
+    allOrders.filter(function(o) { return o.statut !== 'annule'; }).forEach(function(order) {
+      if (!order.produits || !Array.isArray(order.produits)) return;
+      order.produits.forEach(function(item) {
+        var pid = item.produit;
         if (!productSales[pid]) productSales[pid] = { _id: pid, nom: item.nom, image: item.image, totalVendu: 0, totalRevenue: 0 };
         productSales[pid].totalVendu += item.quantite;
         productSales[pid].totalRevenue += item.prix * item.quantite;
       });
-      try {
-        const client = typeof order.client === 'string' ? JSON.parse(order.client) : order.client;
-        if (client && client.telephone) customerPhones.add(client.telephone);
-      } catch {}
     });
-    const topProducts = Object.values(productSales).sort((a, b) => b.totalVendu - a.totalVendu).slice(0, 5);
+    var topProducts = Object.values(productSales).sort(function(a, b) { return b.totalVendu - a.totalVendu; }).slice(0, 5);
 
-    const dailyRevenueRows = (await db.execute({
-      sql: 'SELECT date(dateCommande) as day, SUM(montantTotal) as revenue, COUNT(*) as orders FROM orders WHERE dateCommande >= ? AND statut != ? GROUP BY date(dateCommande) ORDER BY day ASC',
-      args: [thirtyDaysAgoStr, 'annule']
-    })).rows || [];
-    const dailyRevenueLast30Days = dailyRevenueRows.map(r => ({ date: r.day, revenue: r.revenue, orders: r.orders }));
+    var dailyRevenue = {};
+    revenueLast30.forEach(function(order) {
+      var day = new Date(order.dateCommande).toISOString().split('T')[0];
+      if (!dailyRevenue[day]) dailyRevenue[day] = { date: day, revenue: 0, orders: 0 };
+      dailyRevenue[day].revenue += order.montantTotal;
+      dailyRevenue[day].orders += 1;
+    });
+    var dailyRevenueLast30Days = Object.values(dailyRevenue).sort(function(a, b) { return a.date.localeCompare(b.date); });
 
-    const result = {
+    var customerPhones = new Set();
+    allOrders.forEach(function(o) {
+      if (o.client && o.client.telephone) customerPhones.add(o.client.telephone);
+    });
+
+    var result = {
       kpis: {
-        totalRevenue: currentRevenue, revenueGrowth, totalOrders,
-        activeOrders: (statusMap['en_attente'] || 0) + (statusMap['en_preparation'] || 0) + (statusMap['expedie'] || 0),
-        avgOrderValue, totalProducts, totalCustomers: customerPhones.size, lowStockCount: lowStockProducts.length
+        totalRevenue: currentRevenue, revenueGrowth: revenueGrowth, totalOrders: totalOrders,
+        activeOrders: (statusCounts['en_attente'] || 0) + (statusCounts['en_preparation'] || 0) + (statusCounts['expedie'] || 0),
+        avgOrderValue: avgOrderValue, totalProducts: totalProducts, totalCustomers: customerPhones.size, lowStockCount: lowStockProducts.length
       },
       ordersByStatus: {
-        en_attente: statusMap['en_attente'] || 0, en_preparation: statusMap['en_preparation'] || 0,
-        expedie: statusMap['expedie'] || 0, livre: statusMap['livre'] || 0, annule: statusMap['annule'] || 0
+        en_attente: statusCounts['en_attente'] || 0, en_preparation: statusCounts['en_preparation'] || 0,
+        expedie: statusCounts['expedie'] || 0, livre: statusCounts['livre'] || 0, annule: statusCounts['annule'] || 0
       },
-      dailyRevenue: dailyRevenueLast30Days, recentOrders, topProducts, lowStockProducts
+      dailyRevenue: dailyRevenueLast30Days, recentOrders: recentOrders, topProducts: topProducts, lowStockProducts: lowStockProducts
     };
 
     setCache('dashboard', result);
