@@ -40,7 +40,7 @@ import { AuthService } from './services/auth.service';
             <i class="fas fa-shopping-cart"></i>
             <span>Commandes</span>
           </a>
-          <a href="http://localhost:4200" target="_blank" class="nav-item" (click)="closeMobileSidebar()">
+          <a href="/" target="_blank" class="nav-item" (click)="closeMobileSidebar()">
             <i class="fas fa-external-link-alt"></i>
             <span>Voir la boutique</span>
           </a>
