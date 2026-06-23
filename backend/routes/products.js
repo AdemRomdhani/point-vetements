@@ -1,28 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 const { getDb, parseProductRow } = require('../db');
 const auth = require('../middleware/auth');
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|gif|webp|bmp|tiff/;
-  const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-  const mime = allowed.test(file.mimetype);
-  cb(null, ext && mime);
-};
-
-const upload = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+const { upload, uploadToImgbb, deleteFromImgbb } = require('./imageUpload');
 
 router.get('/', auth, async (req, res) => {
   try {
@@ -101,11 +84,23 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, upload.array('images', 10), async (req, res) => {
   try {
+    console.log('POST /api/products - body:', JSON.stringify(req.body).substring(0, 200));
+    console.log('Files count:', req.files ? req.files.length : 0);
     const db = getDb();
     const d = req.body;
     const id = crypto.randomUUID();
+
     let images = [];
-    if (req.files && req.files.length > 0) images = req.files.map(f => `/uploads/${f.filename}`);
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const url = await uploadToImgbb(file);
+          images.push(url);
+        } catch (uploadErr) {
+          console.error('Image upload error:', uploadErr.message);
+        }
+      }
+    }
 
     let tailles = [];
     if (typeof d.tailles === 'string') tailles = d.tailles.split(',').map(t => t.trim()).filter(Boolean);
@@ -145,13 +140,24 @@ router.put('/:id', auth, upload.array('images', 10), async (req, res) => {
     const d = req.body;
     const old = parseProductRow(existing.rows[0]);
     let images = old.images;
+
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(f => `/uploads/${f.filename}`);
-      if (d.existingImages) {
-        const existImgs = Array.isArray(d.existingImages) ? d.existingImages : [d.existingImages];
-        images = [...existImgs, ...newImages];
-      } else {
-        images = newImages;
+      const newImages = [];
+      for (const file of req.files) {
+        try {
+          const url = await uploadToImgbb(file);
+          newImages.push(url);
+        } catch (uploadErr) {
+          console.error('Image upload error:', uploadErr.message);
+        }
+      }
+      if (newImages.length > 0) {
+        if (d.existingImages) {
+          const existImgs = Array.isArray(d.existingImages) ? d.existingImages : [d.existingImages];
+          images = [...existImgs, ...newImages];
+        } else {
+          images = newImages;
+        }
       }
     }
 
@@ -196,10 +202,7 @@ router.delete('/:id', auth, async (req, res) => {
     await db.execute({ sql: 'DELETE FROM products WHERE _id = ?', args: [req.params.id] });
 
     if (product.images && product.images.length > 0) {
-      product.images.forEach(img => {
-        const filePath = path.join(__dirname, '..', img);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      });
+      product.images.forEach(img => deleteFromImgbb(img));
     }
     res.json({ message: 'Produit supprime' });
   } catch (err) {

@@ -66,9 +66,15 @@ if (fs.existsSync(frontendDist)) {
   });
 }
 
+const multer = require('multer');
+
 app.use((err, req, res, next) => {
-  console.error('Erreur:', err.stack);
-  res.status(500).json({ error: 'Erreur interne du serveur' });
+  if (err instanceof multer.MulterError) {
+    console.error('Multer error:', err.code, err.message);
+    return res.status(400).json({ error: 'Erreur upload: ' + err.message });
+  }
+  console.error('Erreur:', err.stack || err.message || err);
+  res.status(500).json({ error: err.message || 'Erreur interne du serveur' });
 });
 
 initDb().then(() => {

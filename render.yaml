@@ -25,4 +25,6 @@ services:
         sync: false
       - key: TURSO_AUTH_TOKEN
         sync: false
+      - key: IMGBB_API_KEY
+        sync: false
     healthCheckPath: /api/health
