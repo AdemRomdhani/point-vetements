@@ -73,10 +73,14 @@ function parseJsonField(field) {
 
 function parseOrderRow(row) {
   if (!row) return null;
+  let parsedClient = row.client;
+  if (typeof row.client === 'string') {
+    try { parsedClient = JSON.parse(row.client); } catch { parsedClient = { nom: '', prenom: '', telephone: '', adresse: '' }; }
+  }
   return {
     ...row,
     produits: parseJsonField(row.produits),
-    client: typeof row.client === 'string' ? JSON.parse(row.client) : row.client
+    client: parsedClient || { nom: '', prenom: '', telephone: '', adresse: '' }
   };
 }
 
