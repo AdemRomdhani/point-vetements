@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
+import { SplashService } from '../../services/splash.service';
 import { Product } from '../../models/product.model';
 
 @Component({
@@ -422,7 +423,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private filterListener: any;
   private searchListener: any;
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService, private splash: SplashService) {}
 
   ngOnInit() {
     this.loadProducts();
@@ -456,6 +457,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.products = data;
         this.filteredProducts = data;
         this.loading = false;
+        this.splash.hide();
         if (this.currentCategory) {
           this.filterProducts();
         }
@@ -463,6 +465,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Erreur chargement produits:', err);
         this.loading = false;
+        this.splash.hide();
       }
     });
   }

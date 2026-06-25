@@ -1,12 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './components/header/header.component';
+import { SplashService } from './services/splash.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent],
+  imports: [RouterOutlet, HeaderComponent, CommonModule],
   template: `
+    <div class="splash-overlay" *ngIf="splashVisible" [class.hiding]="splashHiding">
+      <div class="splash-logo">
+        <span class="splash-logo-text">POINT</span>
+        <span class="splash-logo-sub">VETEMENTS</span>
+      </div>
+    </div>
+
     <app-header></app-header>
     <main>
       <router-outlet></router-outlet>
@@ -148,4 +157,18 @@ import { HeaderComponent } from './components/header/header.component';
     }
   `]
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+  splashVisible = true;
+  splashHiding = false;
+
+  constructor(private splash: SplashService) {}
+
+  ngOnInit() {
+    this.splash.visible$.subscribe(visible => {
+      if (!visible && this.splashVisible) {
+        this.splashHiding = true;
+        setTimeout(() => this.splashVisible = false, 600);
+      }
+    });
+  }
+}
