@@ -12,11 +12,8 @@ import { FormsModule } from '@angular/forms';
       <div class="container">
         <div class="header-inner">
           <a routerLink="/" class="logo" (click)="resetAll()">
-            <svg class="logo-icon-svg" viewBox="0 0 64 64" width="40" height="40">
-              <rect width="64" height="64" rx="14" fill="#1A1A1A"/>
-              <text x="32" y="43" font-family="Georgia, serif" font-size="28" font-weight="700" fill="#C9A96E" text-anchor="middle">PV</text>
-            </svg>
-            <span class="logo-text">Point Vetements</span>
+            <span class="logo-text">POINT</span>
+            <span class="logo-subtext">VETEMENTS</span>
           </a>
 
           <nav class="nav">
@@ -112,19 +109,27 @@ import { FormsModule } from '@angular/forms';
     }
     .logo {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      flex-direction: column;
       flex-shrink: 0;
       text-decoration: none;
-    }
-    .logo-icon-svg {
-      flex-shrink: 0;
+      gap: 0;
     }
     .logo-text {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: 100;
+      letter-spacing: 6px;
       color: var(--noir);
+      line-height: 1;
+    }
+    .logo-subtext {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 5px;
+      color: #A89070;
+      line-height: 1;
+      margin-top: 2px;
     }
     .nav {
       display: flex;
@@ -210,14 +215,15 @@ import { FormsModule } from '@angular/forms';
     }
     @media (max-width: 768px) {
       .nav { display: none; }
-      .logo-text { font-size: 18px; }
+      .logo-text { font-size: 18px; letter-spacing: 4px; }
+      .logo-subtext { font-size: 7px; letter-spacing: 3px; }
       .search-wrap.open input { width: 150px; }
       .hamburger-btn { display: flex; }
     }
     @media (max-width: 480px) {
       .header-inner { padding: 10px 0; gap: 8px; }
-      .logo-icon-svg { width: 32px; height: 32px; }
-      .logo-text { font-size: 16px; }
+      .logo-text { font-size: 16px; letter-spacing: 3px; }
+      .logo-subtext { font-size: 7px; letter-spacing: 2px; }
       .search-wrap.open input { width: 120px; }
       .icon-btn { width: 38px; height: 38px; }
     }

@@ -16,11 +16,8 @@ import { HeaderComponent } from './components/header/header.component';
         <div class="footer-content">
           <div class="footer-brand">
             <div class="footer-logo">
-              <svg viewBox="0 0 64 64" width="48" height="48">
-                <rect width="64" height="64" rx="14" fill="#C9A96E"/>
-                <text x="32" y="43" font-family="Georgia, serif" font-size="28" font-weight="700" fill="#1A1A1A" text-anchor="middle">PV</text>
-              </svg>
-              <h3>Point Vetements</h3>
+              <span class="footer-logo-text">POINT</span>
+              <span class="footer-logo-sub">VETEMENTS</span>
             </div>
             <p>Votre destination mode en ligne</p>
           </div>
@@ -57,14 +54,30 @@ import { HeaderComponent } from './components/header/header.component';
       gap: 40px;
       margin-bottom: 30px;
     }
-    .footer-brand h3 {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
     .footer-logo {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 10px;
+    }
+    .footer-logo-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 28px;
+      font-weight: 100;
+      letter-spacing: 8px;
+      color: var(--beige);
+      line-height: 1;
+    }
+    .footer-logo-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 6px;
+      color: #A89070;
+      line-height: 1;
+    }
+    .footer-brand h3 {
+      font-size: 24px;
       margin-bottom: 10px;
     }
     .footer-brand p {
@@ -120,7 +133,7 @@ import { HeaderComponent } from './components/header/header.component';
         gap: 24px;
       }
       .footer-logo {
-        justify-content: center;
+        align-items: center;
       }
       .footer-social {
         justify-content: center;

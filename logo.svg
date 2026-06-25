@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200">
+  <defs>
+    <linearGradient id="beige" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#C4B097"/>
+      <stop offset="50%" style="stop-color:#A89070"/>
+      <stop offset="100%" style="stop-color:#C4B097"/>
+    </linearGradient>
+  </defs>
+
+  <!-- White background -->
+  <rect width="600" height="200" fill="#FFFEF9"/>
+
+  <!-- Thin top accent line -->
+  <rect x="120" y="55" width="360" height="1" fill="url(#beige)"/>
+
+  <!-- Main brand: POINT -->
+  <text x="300" y="120" text-anchor="middle" font-family="'Helvetica Neue', 'Arial', sans-serif" font-size="68" font-weight="100" letter-spacing="28" fill="#1A1A1A">POINT</text>
+
+  <!-- Thin separator -->
+  <line x1="200" y1="135" x2="400" y2="135" stroke="#C4B097" stroke-width="0.5"/>
+
+  <!-- VETEMENTS -->
+  <text x="300" y="162" text-anchor="middle" font-family="'Helvetica Neue', 'Arial', sans-serif" font-size="20" font-weight="300" letter-spacing="18" fill="#A89070">VETEMENTS</text>
+
+  <!-- Thin bottom accent line -->
+  <rect x="120" y="175" width="360" height="1" fill="url(#beige)"/>
+</svg>
