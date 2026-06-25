@@ -248,6 +248,25 @@ import { Product } from '../../models/product.model';
       </div>
     </div>
 
+    <div class="mobile-bottom-bar" *ngIf="product">
+      <div class="bottom-bar-price">
+        <span class="bottom-price">{{ getDisplayPrice() | number:'1.2-2' }} DT</span>
+        <span class="bottom-old-price" *ngIf="product.promotions > 0">{{ product.prix | number:'1.2-2' }} DT</span>
+      </div>
+      <div class="bottom-bar-qty">
+        <button class="qty-btn" (click)="decrementQuantity()" [disabled]="quantity <= 1">
+          <i class="fas fa-minus"></i>
+        </button>
+        <span class="qty-value">{{ quantity }}</span>
+        <button class="qty-btn" (click)="incrementQuantity()" [disabled]="quantity >= product.quantite">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+      <button class="bottom-bar-buy" (click)="openOrderForm()">
+        <i class="fas fa-shopping-bag"></i> Acheter
+      </button>
+    </div>
+
     <div class="modal-overlay" *ngIf="showOrderForm" (click)="showOrderForm = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
@@ -522,11 +541,131 @@ import { Product } from '../../models/product.model';
     .toast.error { background: var(--danger); }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+    .mobile-bottom-bar {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-bottom-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--blanc);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        padding: 12px 16px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+        z-index: 100;
+        align-items: center;
+        gap: 12px;
+      }
+      .bottom-bar-price {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+      .bottom-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--noir);
+        line-height: 1.2;
+      }
+      .bottom-old-price {
+        font-size: 12px;
+        color: var(--gris-light);
+        text-decoration: line-through;
+        line-height: 1.2;
+      }
+      .bottom-bar-qty {
+        display: flex;
+        align-items: center;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .bottom-bar-qty .qty-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: var(--beige-light);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--noir);
+        transition: background 0.3s;
+        touch-action: manipulation;
+      }
+      .bottom-bar-qty .qty-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .bottom-bar-qty .qty-btn:hover:not(:disabled) {
+        background: var(--beige-dark);
+      }
+      .bottom-bar-qty .qty-value {
+        width: 36px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .bottom-bar-buy {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--noir);
+        color: var(--blanc);
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+      .bottom-bar-buy:hover {
+        background: var(--noir-light);
+        transform: translateY(-1px);
+      }
+      .bottom-bar-buy:active {
+        transform: translateY(0);
+      }
+    }
+    @media (max-width: 480px) {
+      .mobile-bottom-bar {
+        padding: 10px 12px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+        gap: 10px;
+      }
+      .bottom-price {
+        font-size: 16px;
+      }
+      .bottom-bar-qty .qty-btn {
+        width: 32px;
+        height: 32px;
+      }
+      .bottom-bar-qty .qty-value {
+        width: 30px;
+        font-size: 14px;
+      }
+      .bottom-bar-buy {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+
     @media (max-width: 1024px) {
       .detail-grid { gap: 32px; }
     }
     @media (max-width: 768px) {
-      .product-detail { padding: 16px 0; }
+      .product-detail { padding: 16px 0; padding-bottom: 100px; }
       .breadcrumb { margin-bottom: 20px; }
       .detail-grid {
         grid-template-columns: 1fr;
@@ -552,7 +691,7 @@ import { Product } from '../../models/product.model';
       .slider-arrow-right { right: 8px; }
     }
     @media (max-width: 480px) {
-      .product-detail { padding: 12px 0; }
+      .product-detail { padding: 12px 0; padding-bottom: 90px; }
       .breadcrumb { font-size: 12px; gap: 6px; margin-bottom: 16px; }
       .slider-viewport { aspect-ratio: 1/1; }
       .info h1 { font-size: 20px; }
