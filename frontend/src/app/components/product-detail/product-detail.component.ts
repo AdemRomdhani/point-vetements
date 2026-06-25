@@ -11,6 +11,86 @@ import { Product } from '../../models/product.model';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
+    <div class="skeleton-detail" *ngIf="loading">
+      <div class="container">
+        <div class="breadcrumb-skeleton">
+          <div class="skeleton skeleton-text" style="width: 60px; height: 12px;"></div>
+        </div>
+        <div class="skeleton-detail-grid">
+          <div class="skeleton-gallery">
+            <div class="skeleton skeleton-slider"></div>
+            <div class="thumbnails-skeleton">
+              <div class="skeleton" style="width: 72px; height: 72px; border-radius: 8px;"></div>
+              <div class="skeleton" style="width: 72px; height: 72px; border-radius: 8px;"></div>
+              <div class="skeleton" style="width: 72px; height: 72px; border-radius: 8px;"></div>
+            </div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton skeleton-badge"></div>
+            <div class="skeleton skeleton-text-lg" style="width: 70%; height: 30px;"></div>
+            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+            <div class="skeleton-price">
+              <div class="skeleton skeleton-price-current"></div>
+              <div class="skeleton skeleton-price-old"></div>
+            </div>
+            <div class="skeleton-details-box">
+              <div class="skeleton-detail-item">
+                <div class="skeleton skeleton-detail-icon"></div>
+                <div class="skeleton-detail-text">
+                  <div class="skeleton skeleton-text-sm" style="width: 50px;"></div>
+                  <div class="skeleton skeleton-text" style="width: 70px;"></div>
+                </div>
+              </div>
+              <div class="skeleton-detail-item">
+                <div class="skeleton skeleton-detail-icon"></div>
+                <div class="skeleton-detail-text">
+                  <div class="skeleton skeleton-text-sm" style="width: 50px;"></div>
+                  <div class="skeleton skeleton-text" style="width: 70px;"></div>
+                </div>
+              </div>
+              <div class="skeleton-detail-item">
+                <div class="skeleton skeleton-detail-icon"></div>
+                <div class="skeleton-detail-text">
+                  <div class="skeleton skeleton-text-sm" style="width: 50px;"></div>
+                  <div class="skeleton skeleton-text" style="width: 70px;"></div>
+                </div>
+              </div>
+              <div class="skeleton-detail-item">
+                <div class="skeleton skeleton-detail-icon"></div>
+                <div class="skeleton-detail-text">
+                  <div class="skeleton skeleton-text-sm" style="width: 50px;"></div>
+                  <div class="skeleton skeleton-text" style="width: 70px;"></div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="skeleton skeleton-text" style="width: 90px; height: 16px; margin-bottom: 12px;"></div>
+              <div class="skeleton-desc-line" style="width: 100%;"></div>
+              <div class="skeleton-desc-line" style="width: 85%;"></div>
+              <div class="skeleton-desc-line" style="width: 60%;"></div>
+            </div>
+            <div>
+              <div class="skeleton skeleton-text" style="width: 90px; height: 16px; margin-bottom: 12px;"></div>
+              <div class="skeleton-buttons">
+                <div class="skeleton skeleton-btn"></div>
+                <div class="skeleton skeleton-btn"></div>
+                <div class="skeleton skeleton-btn"></div>
+              </div>
+            </div>
+            <div>
+              <div class="skeleton skeleton-text" style="width: 90px; height: 16px; margin-bottom: 12px;"></div>
+              <div style="display: flex; align-items: center; gap: 0; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; width: fit-content;">
+                <div class="skeleton" style="width: 48px; height: 48px;"></div>
+                <div class="skeleton" style="width: 60px; height: 48px;"></div>
+                <div class="skeleton" style="width: 48px; height: 48px;"></div>
+              </div>
+            </div>
+            <div class="skeleton skeleton-btn-lg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="product-detail" *ngIf="product">
       <div class="container">
         <div class="breadcrumb">
@@ -253,6 +333,9 @@ import { Product } from '../../models/product.model';
     </div>
   `,
   styles: [`
+    .breadcrumb-skeleton { margin-bottom: 30px; }
+    .thumbnails-skeleton { display: flex; gap: 8px; margin-top: 10px; }
+
     .product-detail { padding: 30px 0; }
     .breadcrumb {
       display: flex; align-items: center; gap: 10px;
@@ -488,6 +571,7 @@ import { Product } from '../../models/product.model';
 })
 export class ProductDetailComponent implements OnInit {
   product: Product | null = null;
+  loading = true;
   selectedImage = '';
   selectedTaille = '';
   selectedCouleur = '';
@@ -529,9 +613,15 @@ export class ProductDetailComponent implements OnInit {
           this.product = data;
           this.selectedImage = data.images[0] || '';
           this.currentSlideIndex = 0;
+          this.loading = false;
         },
-        error: (err) => console.error(err)
+        error: (err) => {
+          console.error(err);
+          this.loading = false;
+        }
       });
+    } else {
+      this.loading = false;
     }
   }
 

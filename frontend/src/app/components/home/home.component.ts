@@ -99,9 +99,26 @@ import { Product } from '../../models/product.model';
           <p>Essayez de modifier vos filtres ou revenez plus tard.</p>
         </div>
 
-        <div class="loading" *ngIf="loading">
-          <div class="spinner"></div>
-          <p>Chargement des produits...</p>
+        <div class="products-grid" *ngIf="loading">
+          <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6,7,8]">
+            <div class="skeleton skeleton-image"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-text-sm"></div>
+              <div class="skeleton-text-lg"></div>
+              <div class="skeleton-colors">
+                <div class="skeleton skeleton-dot"></div>
+                <div class="skeleton skeleton-dot"></div>
+                <div class="skeleton skeleton-dot"></div>
+              </div>
+              <div class="skeleton-text" style="width: 35%"></div>
+              <div class="skeleton-sizes">
+                <div class="skeleton skeleton-size"></div>
+                <div class="skeleton skeleton-size"></div>
+                <div class="skeleton skeleton-size"></div>
+              </div>
+              <div class="skeleton-text-sm" style="width: 50%"></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -354,18 +371,6 @@ import { Product } from '../../models/product.model';
     .loading {
       text-align: center;
       padding: 60px;
-    }
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--noir);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
     }
 
     @media (max-width: 1024px) {
