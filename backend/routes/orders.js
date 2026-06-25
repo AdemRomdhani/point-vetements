@@ -161,4 +161,34 @@ router.put('/:id/statut', auth, async (req, res) => {
   }
 });
 
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.execute({ sql: 'SELECT * FROM orders WHERE _id = ?', args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Commande non trouvee' });
+
+    await db.execute({ sql: 'DELETE FROM orders WHERE _id = ?', args: [req.params.id] });
+    res.json({ message: 'Commande supprimee' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/cleanup/old-delivered', auth, async (req, res) => {
+  try {
+    const db = getDb();
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const result = await db.execute({
+      sql: "DELETE FROM orders WHERE statut = 'livre' AND dateLivraison < ?",
+      args: [twoWeeksAgo.toISOString()]
+    });
+
+    res.json({ message: 'Commandes livrees anciennees supprimees', deleted: result.rowsAffected });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

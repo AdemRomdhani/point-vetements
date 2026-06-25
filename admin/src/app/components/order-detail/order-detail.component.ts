@@ -27,6 +27,9 @@ import { ApiService, Order } from '../../services/api.service';
           <span class="badge" [ngClass]="getStatusBadge(order.statut)">
             {{ getStatusLabel(order.statut) }}
           </span>
+          <button class="delete-btn" (click)="deleteOrder()">
+            <i class="fas fa-trash"></i> Supprimer
+          </button>
         </div>
       </div>
 
@@ -161,6 +164,8 @@ import { ApiService, Order } from '../../services/api.service';
     .page-header p { color: var(--gris); font-size: 14px; }
     .header-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
     .header-actions select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--blanc); cursor: pointer; }
+    .delete-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--border); background: var(--blanc); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--danger); transition: var(--transition); font-family: 'Inter', sans-serif; }
+    .delete-btn:hover { background: #FFEBEE; border-color: var(--danger); }
 
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 
@@ -265,6 +270,19 @@ export class OrderDetailComponent implements OnInit {
         this.showToastMessage('Statut mis à jour', 'success');
       },
       error: () => this.showToastMessage('Erreur lors de la mise à jour', 'error')
+    });
+  }
+
+  deleteOrder() {
+    if (!this.order) return;
+    if (!confirm('Supprimer la commande #' + this.order._id.slice(-6).toUpperCase() + ' ?')) return;
+
+    this.api.deleteOrder(this.order._id).subscribe({
+      next: () => {
+        this.showToastMessage('Commande supprimée', 'success');
+        setTimeout(() => this.router.navigate(['/commandes']), 1000);
+      },
+      error: () => this.showToastMessage('Erreur lors de la suppression', 'error')
     });
   }
 

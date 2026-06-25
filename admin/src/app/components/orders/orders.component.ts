@@ -116,9 +116,14 @@ import { ApiService, Order } from '../../services/api.service';
             <span class="total">
               Livraison: <strong>8,00 DT</strong> | Total: <strong>{{ order.montantTotal | number:'1.2-2' }} DT</strong>
             </span>
-            <span class="badge" [ngClass]="getStatusBadge(order.statut)">
-              {{ getStatusLabel(order.statut) }}
-            </span>
+            <div class="footer-right">
+              <span class="badge" [ngClass]="getStatusBadge(order.statut)">
+                {{ getStatusLabel(order.statut) }}
+              </span>
+              <button class="delete-btn" (click)="deleteOrder(order, $event)" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
           </div>
         </a>
       </div>
@@ -192,8 +197,11 @@ import { ApiService, Order } from '../../services/api.service';
     .item-price { font-weight: 600; font-size: 14px; }
 
     .order-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--border); background: var(--beige-light); }
+    .footer-right { display: flex; align-items: center; gap: 12px; }
     .total { font-size: 14px; color: var(--gris); }
     .total strong { font-size: 18px; color: var(--noir); font-family: 'Playfair Display', serif; }
+    .delete-btn { width: 36px; height: 36px; border: 1px solid var(--border); background: var(--blanc); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--danger); font-size: 14px; transition: var(--transition); }
+    .delete-btn:hover { background: #FFEBEE; border-color: var(--danger); }
 
     .pagination { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 20px; }
     .page-info { font-size: 14px; color: var(--gris); }
@@ -239,6 +247,7 @@ export class OrdersComponent implements OnInit {
   ngOnInit() {
     this.loadOrders();
     this.loadStats();
+    this.cleanupOldOrders();
   }
 
   loadOrders() {
@@ -280,6 +289,33 @@ export class OrdersComponent implements OnInit {
         this.showToastMessage('Statut mis a jour', 'success');
       },
       error: (err) => this.showToastMessage('Erreur lors de la mise a jour', 'error')
+    });
+  }
+
+  deleteOrder(order: Order, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!confirm('Supprimer la commande #' + order._id.slice(-6).toUpperCase() + ' ?')) return;
+
+    this.api.deleteOrder(order._id).subscribe({
+      next: () => {
+        this.orders = this.orders.filter(o => o._id !== order._id);
+        this.loadStats();
+        this.showToastMessage('Commande supprimee', 'success');
+      },
+      error: () => this.showToastMessage('Erreur lors de la suppression', 'error')
+    });
+  }
+
+  cleanupOldOrders() {
+    this.api.cleanupOldDeliveredOrders().subscribe({
+      next: (res) => {
+        if (res.deleted > 0) {
+          this.loadOrders();
+          this.loadStats();
+        }
+      },
+      error: () => {}
     });
   }
 

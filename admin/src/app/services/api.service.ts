@@ -123,6 +123,14 @@ export class ApiService {
     return this.http.put<Order>(`${this.apiUrl}/orders/${id}/statut`, { statut });
   }
 
+  deleteOrder(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/orders/${id}`);
+  }
+
+  cleanupOldDeliveredOrders(): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/orders/cleanup/old-delivered`);
+  }
+
   getOrderStats(): Observable<any> {
     return this.http.get(`${this.apiUrl}/orders/stats/summary`);
   }
