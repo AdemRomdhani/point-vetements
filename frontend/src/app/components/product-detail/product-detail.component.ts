@@ -263,7 +263,7 @@ import { Product } from '../../models/product.model';
         </button>
       </div>
       <button class="bottom-bar-buy" (click)="openOrderForm()">
-        <i class="fas fa-shopping-bag"></i> Acheter
+        <span class="buy-btn-inner"><i class="fas fa-shopping-bag"></i> Acheter</span>
       </button>
     </div>
 
@@ -620,7 +620,8 @@ import { Product } from '../../models/product.model';
         justify-content: center;
         gap: 8px;
         padding: 12px 16px;
-        background: var(--noir);
+        background: linear-gradient(135deg, var(--noir) 0%, #333 50%, var(--noir) 100%);
+        background-size: 200% 200%;
         color: var(--blanc);
         border: none;
         border-radius: 10px;
@@ -629,13 +630,50 @@ import { Product } from '../../models/product.model';
         cursor: pointer;
         transition: all 0.3s;
         white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+        animation: buyBtnPulse 2s ease-in-out infinite, buyBtnShimmer 3s ease-in-out infinite;
+      }
+      .buy-btn-inner {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bottom-bar-buy::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -60%;
+        width: 40%;
+        height: 200%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        transform: skewX(-20deg);
+        animation: buyBtnGlint 3s ease-in-out infinite;
+        z-index: 1;
       }
       .bottom-bar-buy:hover {
-        background: var(--noir-light);
-        transform: translateY(-1px);
+        background: linear-gradient(135deg, var(--noir-light) 0%, #444 50%, var(--noir-light) 100%);
+        background-size: 200% 200%;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
       }
       .bottom-bar-buy:active {
-        transform: translateY(0);
+        transform: translateY(0) scale(0.97);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      }
+      @keyframes buyBtnPulse {
+        0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        50% { box-shadow: 0 4px 20px rgba(0,0,0,0.35); }
+      }
+      @keyframes buyBtnShimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+      @keyframes buyBtnGlint {
+        0% { left: -60%; }
+        100% { left: 120%; }
       }
     }
     @media (max-width: 480px) {
