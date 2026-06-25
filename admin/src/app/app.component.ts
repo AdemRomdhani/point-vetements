@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
@@ -9,6 +9,14 @@ import { environment } from '../environments/environment';
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
+    <div class="splash-overlay" *ngIf="showSplash" [class.hiding]="splashHiding">
+      <div class="splash-logo">
+        <span class="splash-logo-text">POINT</span>
+        <span class="splash-logo-sub">VETEMENTS</span>
+        <span class="splash-badge">Admin Panel</span>
+      </div>
+    </div>
+
     <div *ngIf="!isLoggedIn; else adminLayout">
       <router-outlet></router-outlet>
     </div>
@@ -299,14 +307,29 @@ import { environment } from '../environments/environment';
     }
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
   frontendUrl = environment.frontendUrl || '/';
   isLoggedIn = false;
+  showSplash = false;
+  splashHiding = false;
 
-  constructor(private auth: AuthService, private router: Router) {
-    this.auth.isLoggedIn$.subscribe(val => this.isLoggedIn = val);
+  constructor(private auth: AuthService, private router: Router) {}
+
+  ngOnInit() {
+    this.auth.isLoggedIn$.subscribe(val => {
+      const wasLoggedIn = this.isLoggedIn;
+      this.isLoggedIn = val;
+      if (val && !wasLoggedIn) {
+        this.showSplash = true;
+        this.splashHiding = false;
+        setTimeout(() => {
+          this.splashHiding = true;
+          setTimeout(() => this.showSplash = false, 600);
+        }, 2200);
+      }
+    });
   }
 
   toggleSidebar() {
