@@ -17,14 +17,9 @@ import { environment } from '../environments/environment';
       <aside class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
         <div class="sidebar-header">
           <div class="logo">
-            <svg class="logo-icon-svg" viewBox="0 0 64 64" width="44" height="44">
-              <rect width="64" height="64" rx="14" fill="#C9A96E"/>
-              <text x="32" y="43" font-family="Georgia, serif" font-size="28" font-weight="700" fill="#1A1A1A" text-anchor="middle">PV</text>
-            </svg>
-            <div class="logo-text">
-              <h2>Point Vetements</h2>
-              <span class="admin-badge">Admin Panel</span>
-            </div>
+            <span class="logo-text">POINT</span>
+            <span class="logo-subtext">VETEMENTS</span>
+            <span class="admin-badge">Admin Panel</span>
           </div>
         </div>
 
@@ -105,25 +100,31 @@ import { environment } from '../environments/environment';
 
     .logo {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      flex-direction: column;
+      gap: 2px;
     }
-
-    .logo-icon-svg {
-      flex-shrink: 0;
+    .logo-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 100;
+      letter-spacing: 5px;
+      color: var(--blanc);
+      line-height: 1;
     }
-
-    .logo h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 18px;
-      margin-bottom: 2px;
+    .logo-subtext {
+      font-family: 'Inter', sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: 4px;
+      color: #A89070;
+      line-height: 1;
     }
-
     .admin-badge {
-      font-size: 11px;
+      font-size: 9px;
       color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
+      margin-top: 4px;
     }
 
     .sidebar-nav {

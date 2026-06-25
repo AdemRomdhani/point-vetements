@@ -12,8 +12,10 @@ import { AuthService } from '../../services/auth.service';
     <div class="login-page">
       <div class="login-card">
         <div class="login-header">
-          <span class="logo-icon"><i class="fas fa-tshirt"></i></span>
-          <h1>Point Vetements</h1>
+          <div class="login-logo">
+            <span class="login-logo-text">POINT</span>
+            <span class="login-logo-sub">VETEMENTS</span>
+          </div>
           <p>Panel d'administration</p>
         </div>
         <form (ngSubmit)="login()">
@@ -55,21 +57,28 @@ import { AuthService } from '../../services/auth.service';
       text-align: center;
       margin-bottom: 32px;
     }
-    .logo-icon {
-      width: 60px;
-      height: 60px;
-      background: var(--noir);
-      color: var(--blanc);
-      border-radius: 16px;
-      display: inline-flex;
+    .login-logo {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      margin-bottom: 16px;
+      gap: 4px;
+      margin-bottom: 12px;
     }
-    .login-header h1 {
-      font-size: 24px;
-      margin-bottom: 4px;
+    .login-logo-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 32px;
+      font-weight: 100;
+      letter-spacing: 8px;
+      color: var(--noir);
+      line-height: 1;
+    }
+    .login-logo-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 6px;
+      color: #A89070;
+      line-height: 1;
     }
     .login-header p {
       color: var(--gris);
