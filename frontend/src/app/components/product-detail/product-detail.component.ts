@@ -250,8 +250,8 @@ import { Product } from '../../models/product.model';
 
     <div class="mobile-bottom-bar" *ngIf="product">
       <div class="bottom-bar-price">
-        <span class="bottom-price">{{ getDisplayPrice() | number:'1.2-2' }} DT</span>
-        <span class="bottom-old-price" *ngIf="product.promotions > 0">{{ product.prix | number:'1.2-2' }} DT</span>
+        <span class="bottom-price">{{ getDisplayPrice() * quantity | number:'1.2-2' }} DT</span>
+        <span class="bottom-old-price" *ngIf="product.promotions > 0">{{ product.prix * quantity | number:'1.2-2' }} DT</span>
       </div>
       <div class="bottom-bar-qty">
         <button class="qty-btn" (click)="decrementQuantity()" [disabled]="quantity <= 1">
