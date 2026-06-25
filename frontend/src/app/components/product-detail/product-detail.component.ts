@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { OrderService } from '../../services/order.service';
+import { SplashService } from '../../services/splash.service';
 import { Product } from '../../models/product.model';
 
 @Component({
@@ -248,7 +249,7 @@ import { Product } from '../../models/product.model';
       </div>
     </div>
 
-    <div class="mobile-bottom-bar" *ngIf="product">
+    <div class="mobile-bottom-bar" *ngIf="product && splashDone">
       <div class="bottom-bar-price">
         <span class="bottom-price">{{ getDisplayPrice() * quantity | number:'1.2-2' }} DT</span>
         <span class="bottom-old-price" *ngIf="product.promotions > 0">{{ product.prix * quantity | number:'1.2-2' }} DT</span>
@@ -775,14 +776,22 @@ export class ProductDetailComponent implements OnInit {
     codePostal: ''
   };
 
+  splashDone = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private splashService: SplashService
   ) {}
 
   ngOnInit() {
+    this.splashService.visible$.subscribe(visible => {
+      if (!visible) this.splashDone = true;
+    });
+    if (this.splashService.isReady) this.splashDone = true;
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.productService.getProduct(id).subscribe({
