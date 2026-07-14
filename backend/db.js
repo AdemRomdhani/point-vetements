@@ -46,9 +46,44 @@ async function initDb() {
       montantTotal REAL NOT NULL,
       fraisLivraison REAL DEFAULT 8,
       statut TEXT DEFAULT 'en_attente',
+      paiement_statut TEXT DEFAULT 'en_attente',
       dateCommande TEXT NOT NULL,
       dateLivraison TEXT,
-      notes TEXT DEFAULT ''
+      notes TEXT DEFAULT '',
+      tracking_numero TEXT DEFAULT ''
+    )
+  `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS product_variants (
+      _id TEXT PRIMARY KEY,
+      produit_id TEXT NOT NULL,
+      taille TEXT NOT NULL,
+      couleur TEXT DEFAULT '',
+      quantite INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (produit_id) REFERENCES products(_id) ON DELETE CASCADE
+    )
+  `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      _id TEXT PRIMARY KEY,
+      produit_id TEXT NOT NULL,
+      nom TEXT NOT NULL,
+      prenom TEXT DEFAULT '',
+      email TEXT DEFAULT '',
+      rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+      commentaire TEXT DEFAULT '',
+      approuve INTEGER DEFAULT 0,
+      dateReview TEXT NOT NULL,
+      FOREIGN KEY (produit_id) REFERENCES products(_id) ON DELETE CASCADE
+    )
+  `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS config (
+      cle TEXT PRIMARY KEY,
+      valeur TEXT NOT NULL
     )
   `);
 
@@ -61,6 +96,22 @@ async function initDb() {
   await client.execute('CREATE INDEX IF NOT EXISTS idx_products_nom ON products(nom)');
   await client.execute('CREATE INDEX IF NOT EXISTS idx_orders_statut ON orders(statut)');
   await client.execute('CREATE INDEX IF NOT EXISTS idx_orders_dateCommande ON orders(dateCommande)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_variants_produit ON product_variants(produit_id)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_variants_taille_couleur ON product_variants(taille, couleur)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_reviews_produit ON reviews(produit_id)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews(rating)');
+
+  const configExists = await client.execute("SELECT COUNT(*) as c FROM config WHERE cle = 'fraisLivraison'");
+  if (configExists.rows[0].c === 0) {
+    await client.execute({ sql: "INSERT INTO config (cle, valeur) VALUES (?, ?)", args: ['fraisLivraison', '8'] });
+    await client.execute({ sql: "INSERT INTO config (cle, valeur) VALUES (?, ?)", args: ['nomBoutique', 'Point Vetements'] });
+    await client.execute({ sql: "INSERT INTO config (cle, valeur) VALUES (?, ?)", args: ['emailContact', 'contact@pointvetements.com'] });
+  }
+
+  try { await client.execute("ALTER TABLE orders ADD COLUMN paiement_statut TEXT DEFAULT 'en_attente'"); } catch {}
+  try { await client.execute("ALTER TABLE orders ADD COLUMN tracking_numero TEXT DEFAULT ''"); } catch {}
+  try { await client.execute("ALTER TABLE reviews ADD COLUMN approuve INTEGER DEFAULT 1"); } catch {}
+  try { await client.execute("UPDATE reviews SET approuve = 1 WHERE approuve = 0"); } catch {}
 
   console.log('Base de donnees initialisee avec index');
 }
@@ -80,7 +131,9 @@ function parseOrderRow(row) {
   return {
     ...row,
     produits: parseJsonField(row.produits),
-    client: parsedClient || { nom: '', prenom: '', telephone: '', adresse: '' }
+    client: parsedClient || { nom: '', prenom: '', telephone: '', adresse: '' },
+    paiement_statut: row.paiement_statut || 'en_attente',
+    tracking_numero: row.tracking_numero || ''
   };
 }
 
@@ -95,4 +148,4 @@ function parseProductRow(row) {
   };
 }
 
-module.exports = { getDb, initDb, parseProductRow, parseOrderRow };
+module.exports = { getDb, initDb, parseProductRow, parseOrderRow, parseJsonField };

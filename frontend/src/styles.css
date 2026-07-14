@@ -201,64 +201,7 @@ a {
 
 /* Skeleton Loading */
 
-/* Splash / Preloader */
-.preloader {
-  position: fixed;
-  inset: 0;
-  background: var(--beige-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  animation: preloaderFadeOut 0.6s ease 2s forwards;
-}
-
-.preloader-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  animation: preloaderPopIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
-             preloaderPulse 1.5s ease-in-out 0.8s infinite;
-  opacity: 0;
-  transform: scale(0.3);
-}
-
-.preloader-text {
-  font-family: 'Inter', sans-serif;
-  font-size: 48px;
-  font-weight: 100;
-  letter-spacing: 14px;
-  color: var(--noir);
-  line-height: 1;
-}
-
-.preloader-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 10px;
-  color: #A89070;
-  line-height: 1;
-}
-
-@keyframes preloaderPopIn {
-  0% { opacity: 0; transform: scale(0.3); }
-  50% { opacity: 1; }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-@keyframes preloaderPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes preloaderFadeOut {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.1); pointer-events: none; visibility: hidden; }
-}
-
-/* Angular splash overlay (for after bootstrap) */
+/* Splash overlay */
 .splash-overlay {
   position: fixed;
   inset: 0;

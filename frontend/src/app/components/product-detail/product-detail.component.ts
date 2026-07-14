@@ -4,13 +4,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { OrderService } from '../../services/order.service';
+import { CartService } from '../../services/cart.service';
 import { SplashService } from '../../services/splash.service';
+import { SeoService } from '../../services/seo.service';
 import { Product } from '../../models/product.model';
+import { ReviewsComponent } from '../reviews/reviews.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ReviewsComponent],
   template: `
     <div class="skeleton-detail" *ngIf="loading">
       <div class="container">
@@ -241,11 +244,18 @@ import { Product } from '../../models/product.model';
               </div>
             </div>
 
-            <button class="btn btn-primary btn-lg add-to-cart" (click)="openOrderForm()">
-              <i class="fas fa-shopping-bag"></i> Commander maintenant
-            </button>
+            <div class="action-buttons">
+              <button class="btn btn-primary btn-lg add-to-cart" (click)="openOrderForm()">
+                <i class="fas fa-shopping-bag"></i> Commander maintenant
+              </button>
+              <button class="btn btn-secondary btn-lg add-to-cart-cart" (click)="addToCart()">
+                <i class="fas fa-cart-plus"></i> Ajouter au panier
+              </button>
+            </div>
           </div>
         </div>
+
+        <app-reviews [productId]="product._id" *ngIf="product"></app-reviews>
       </div>
     </div>
 
@@ -294,11 +304,11 @@ import { Product } from '../../models/product.model';
             </div>
             <div class="order-line">
               <span>Frais de livraison</span>
-              <span>8,00 DT</span>
+              <span>{{ fraisLivraison | number:'1.2-2' }} DT</span>
             </div>
             <div class="order-total">
               <span>Total</span>
-              <span class="total-price">{{ getDisplayPrice() * quantity + 8 | number:'1.2-2' }} DT</span>
+              <span class="total-price">{{ getDisplayPrice() * quantity + fraisLivraison | number:'1.2-2' }} DT</span>
             </div>
           </div>
 
@@ -319,6 +329,11 @@ import { Product } from '../../models/product.model';
             <div class="form-group">
               <label>Telephone *</label>
               <input type="tel" [(ngModel)]="client.telephone" name="telephone" required placeholder="Numero de telephone">
+            </div>
+
+            <div class="form-group">
+              <label>Email (pour confirmation)</label>
+              <input type="email" [(ngModel)]="client.email" name="email" placeholder="Votre email">
             </div>
 
             <div class="form-group">
@@ -498,7 +513,9 @@ import { Product } from '../../models/product.model';
     .quantity-control button:disabled { opacity: 0.4; cursor: not-allowed; }
     .quantity-control button:hover:not(:disabled) { background: var(--beige-dark); }
     .quantity-control span { width: 60px; text-align: center; font-weight: 600; font-size: 16px; }
+    .action-buttons { display: flex; gap: 12px; }
     .add-to-cart { width: 100%; justify-content: center; }
+    .add-to-cart-cart { flex: 1; justify-content: center; }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.5);
@@ -771,19 +788,23 @@ export class ProductDetailComponent implements OnInit {
     nom: '',
     prenom: '',
     telephone: '',
+    email: '',
     adresse: '',
     ville: '',
     codePostal: ''
   };
 
   splashDone = false;
+  fraisLivraison = 8;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
     private orderService: OrderService,
-    private splashService: SplashService
+    private cartService: CartService,
+    private splashService: SplashService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit() {
@@ -791,6 +812,13 @@ export class ProductDetailComponent implements OnInit {
       if (!visible) this.splashDone = true;
     });
     if (this.splashService.isReady) this.splashDone = true;
+
+    this.productService.getConfig().subscribe({
+      next: (config: any) => {
+        if (config.fraisLivraison) this.fraisLivraison = parseFloat(config.fraisLivraison);
+      },
+      error: () => {}
+    });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -800,6 +828,7 @@ export class ProductDetailComponent implements OnInit {
           this.selectedImage = data.images[0] || '';
           this.currentSlideIndex = 0;
           this.loading = false;
+          this.seoService.setProductSeo(data);
         },
         error: (err) => {
           console.error(err);
@@ -875,6 +904,20 @@ export class ProductDetailComponent implements OnInit {
       return;
     }
     this.showOrderForm = true;
+  }
+
+  addToCart() {
+    if (!this.product) return;
+    if (this.product.tailles.length > 0 && !this.selectedTaille) {
+      this.tailleError = true;
+      return;
+    }
+    if (this.product.couleurs && this.product.couleurs.length > 0 && !this.selectedCouleur) {
+      this.couleurError = true;
+      return;
+    }
+    this.cartService.addItem(this.product, this.quantity, this.selectedTaille, this.selectedCouleur);
+    this.showToastMessage('Produit ajoute au panier !', 'success');
   }
 
   submitOrder() {

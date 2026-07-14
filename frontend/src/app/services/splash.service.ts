@@ -1,27 +1,23 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, timer, combineLatest, map } from 'rxjs';
+import { Observable, timer, map, shareReplay } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SplashService {
-  private visibleSubject = new BehaviorSubject<boolean>(true);
-  private dataReadySubject = new BehaviorSubject<boolean>(false);
+  private _isReady = false;
 
-  visible$: Observable<boolean> = combineLatest([
-    timer(2200),
-    this.dataReadySubject
-  ]).pipe(
-    map(([_, ready]) => {
-      if (ready) return false;
-      return this.visibleSubject.value;
-    })
+  visible$: Observable<boolean> = timer(2200).pipe(
+    map(() => {
+      this._isReady = true;
+      return false;
+    }),
+    shareReplay(1)
   );
 
   hide() {
-    this.dataReadySubject.next(true);
-    setTimeout(() => this.visibleSubject.next(false), 600);
+    this._isReady = true;
   }
 
   get isReady(): boolean {
-    return this.dataReadySubject.value;
+    return this._isReady;
   }
 }

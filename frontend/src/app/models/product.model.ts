@@ -17,6 +17,8 @@ export interface Product {
   disponible: boolean;
   promotions: number;
   dateAjout: string;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface Order {
@@ -26,13 +28,15 @@ export interface Order {
   montantTotal: number;
   fraisLivraison: number;
   statut: string;
+  paiement_statut: string;
+  tracking_numero: string;
   dateCommande: string;
   dateLivraison?: string;
   notes: string;
 }
 
 export interface OrderItem {
-  produit: Product;
+  produit: string;
   nom: string;
   taille: string;
   couleur: string;
@@ -45,7 +49,40 @@ export interface Client {
   nom: string;
   prenom: string;
   telephone: string;
+  email?: string;
   adresse: string;
   ville: string;
   codePostal: string;
+}
+
+export interface CartItem {
+  produit: Product;
+  quantite: number;
+  taille: string;
+  couleur: string;
+}
+
+export interface Review {
+  _id: string;
+  produit_id: string;
+  nom: string;
+  prenom: string;
+  rating: number;
+  commentaire: string;
+  approuve: number | boolean;
+  dateReview: string;
+}
+
+export interface OrderTracking {
+  _id: string;
+  statut: string;
+  statutLabel: string;
+  paiement_statut: string;
+  tracking_numero: string;
+  montantTotal: number;
+  fraisLivraison: number;
+  dateCommande: string;
+  dateLivraison: string;
+  produits: OrderItem[];
+  history: { statut: string; date: string; label: string }[];
 }

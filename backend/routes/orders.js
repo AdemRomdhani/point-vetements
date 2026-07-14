@@ -3,20 +3,24 @@ const router = express.Router();
 const crypto = require('crypto');
 const { getDb, parseOrderRow, parseProductRow } = require('../db');
 const auth = require('../middleware/auth');
+const { sendOrderConfirmation, sendStatusUpdate } = require('../email');
 
 router.get('/stats/summary', auth, async (req, res) => {
   try {
     const db = getDb();
-    const allOrders = (await db.execute('SELECT * FROM orders')).rows.map(parseOrderRow);
-    const total = allOrders.length;
-    const enAttente = allOrders.filter(function(o) { return o.statut === 'en_attente'; }).length;
-    const enPreparation = allOrders.filter(function(o) { return o.statut === 'en_preparation'; }).length;
-    const expedie = allOrders.filter(function(o) { return o.statut === 'expedie'; }).length;
-    const livre = allOrders.filter(function(o) { return o.statut === 'livre'; }).length;
-    const annule = allOrders.filter(function(o) { return o.statut === 'annule'; }).length;
-    const revenuTotal = allOrders.filter(function(o) { return o.statut !== 'annule'; }).reduce(function(s, o) { return s + o.montantTotal; }, 0);
-
-    res.json({ total: total, enAttente: enAttente, enPreparation: enPreparation, expedie: expedie, livre: livre, annule: annule, revenuTotal: revenuTotal });
+    const result = await db.execute(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN statut = 'en_attente' THEN 1 ELSE 0 END) as enAttente,
+        SUM(CASE WHEN statut = 'en_preparation' THEN 1 ELSE 0 END) as enPreparation,
+        SUM(CASE WHEN statut = 'expedie' THEN 1 ELSE 0 END) as expedie,
+        SUM(CASE WHEN statut = 'livre' THEN 1 ELSE 0 END) as livre,
+        SUM(CASE WHEN statut = 'annule' THEN 1 ELSE 0 END) as annule,
+        COALESCE(SUM(CASE WHEN statut != 'annule' THEN montantTotal ELSE 0 END), 0) as revenuTotal
+      FROM orders
+    `);
+    const r = result.rows[0];
+    res.json({ total: r.total, enAttente: r.enAttente, enPreparation: r.enPreparation, expedie: r.expedie, livre: r.livre, annule: r.annule, revenuTotal: r.revenuTotal });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -68,6 +72,13 @@ router.post('/', async (req, res) => {
     const db = getDb();
     const { produits, client } = req.body;
 
+    if (!produits || !Array.isArray(produits) || produits.length === 0) {
+      return res.status(400).json({ error: 'Aucun produit dans la commande' });
+    }
+    if (!client || !client.nom || !client.telephone) {
+      return res.status(400).json({ error: 'Informations client requises' });
+    }
+
     const productIds = produits.map(item => item.produit);
     const placeholders = productIds.map(() => '?').join(',');
     const productsResult = await db.execute({ sql: `SELECT * FROM products WHERE _id IN (${placeholders})`, args: productIds });
@@ -106,20 +117,31 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const fraisLivraison = 8;
+    let fraisLivraison = 8;
+    try {
+      const configResult = await db.execute({ sql: "SELECT valeur FROM config WHERE cle = 'fraisLivraison'", args: [] });
+      if (configResult.rows.length > 0) fraisLivraison = parseFloat(configResult.rows[0].valeur) || 8;
+    } catch {}
+
     const id = crypto.randomUUID();
+    const trackingNumero = 'PV' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+
     await db.execute({
-      sql: `INSERT INTO orders (_id, produits, client, montantTotal, fraisLivraison, statut, dateCommande)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO orders (_id, produits, client, montantTotal, fraisLivraison, statut, paiement_statut, tracking_numero, dateCommande)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         id, JSON.stringify(produitsDetails), JSON.stringify(client),
         Math.round((montantTotal + fraisLivraison) * 100) / 100,
-        fraisLivraison, 'en_attente', new Date().toISOString()
+        fraisLivraison, 'en_attente', 'en_attente', trackingNumero, new Date().toISOString()
       ]
     });
 
     const result = await db.execute({ sql: 'SELECT * FROM orders WHERE _id = ?', args: [id] });
-    res.status(201).json(parseOrderRow(result.rows[0]));
+    const order = parseOrderRow(result.rows[0]);
+
+    sendOrderConfirmation(order, {}).catch(() => {});
+
+    res.status(201).json(order);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -138,6 +160,7 @@ router.put('/:id/statut', auth, async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Commande non trouvee' });
 
     const order = parseOrderRow(result.rows[0]);
+    const oldStatus = order.statut;
 
     if (statut === 'annule' && order.statut !== 'annule') {
       for (const item of order.produits) {
@@ -155,7 +178,42 @@ router.put('/:id/statut', auth, async (req, res) => {
     });
 
     const updated = await db.execute({ sql: 'SELECT * FROM orders WHERE _id = ?', args: [req.params.id] });
-    res.json(parseOrderRow(updated.rows[0]));
+    const updatedOrder = parseOrderRow(updated.rows[0]);
+
+    sendStatusUpdate(updatedOrder, oldStatus, statut).catch(() => {});
+
+    res.json(updatedOrder);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id/paiement', auth, async (req, res) => {
+  try {
+    const db = getDb();
+    const { paiement_statut } = req.body;
+    const validStatuts = ['en_attente', 'paye', 'rembourse', 'echoue'];
+    if (!validStatuts.includes(paiement_statut)) {
+      return res.status(400).json({ error: 'Statut de paiement invalide' });
+    }
+
+    await db.execute({ sql: 'UPDATE orders SET paiement_statut = ? WHERE _id = ?', args: [paiement_statut, req.params.id] });
+    const result = await db.execute({ sql: 'SELECT * FROM orders WHERE _id = ?', args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Commande non trouvee' });
+    res.json(parseOrderRow(result.rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id/tracking', auth, async (req, res) => {
+  try {
+    const db = getDb();
+    const { tracking_numero } = req.body;
+    await db.execute({ sql: 'UPDATE orders SET tracking_numero = ? WHERE _id = ?', args: [tracking_numero || '', req.params.id] });
+    const result = await db.execute({ sql: 'SELECT * FROM orders WHERE _id = ?', args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Commande non trouvee' });
+    res.json(parseOrderRow(result.rows[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -169,23 +227,6 @@ router.delete('/:id', auth, async (req, res) => {
 
     await db.execute({ sql: 'DELETE FROM orders WHERE _id = ?', args: [req.params.id] });
     res.json({ message: 'Commande supprimee' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.delete('/cleanup/old-delivered', auth, async (req, res) => {
-  try {
-    const db = getDb();
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-    const result = await db.execute({
-      sql: "DELETE FROM orders WHERE statut = 'livre' AND dateLivraison < ?",
-      args: [twoWeeksAgo.toISOString()]
-    });
-
-    res.json({ message: 'Commandes livrees anciennees supprimees', deleted: result.rowsAffected });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

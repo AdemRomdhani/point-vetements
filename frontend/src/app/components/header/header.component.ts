@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-header',
@@ -34,6 +35,13 @@ import { FormsModule } from '@angular/forms';
                      (keyup.escape)="closeSearch()">
               <button class="icon-btn close" *ngIf="searchOpen" (click)="closeSearch()"><i class="fas fa-times"></i></button>
             </div>
+            <a routerLink="/suivi" class="icon-btn tracking-btn" title="Suivi de commande">
+              <i class="fas fa-truck"></i>
+            </a>
+            <a routerLink="/panier" class="icon-btn cart-btn" title="Panier">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+            </a>
             <button class="hamburger-btn" (click)="toggleMobileMenu()" [class.active]="mobileMenuOpen">
               <span></span><span></span><span></span>
             </button>
@@ -64,6 +72,14 @@ import { FormsModule } from '@angular/forms';
           </a>
           <a routerLink="/" class="mobile-nav-link" [class.active]="currentFilter === 'accessoire'" (click)="filterCategory('accessoire'); closeMobileMenu()">
             <i class="fas fa-gem"></i> Accessoires
+          </a>
+          <div class="mobile-nav-divider"></div>
+          <a routerLink="/panier" class="mobile-nav-link" (click)="closeMobileMenu()">
+            <i class="fas fa-shopping-cart"></i> Panier
+            <span class="mobile-cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+          </a>
+          <a routerLink="/suivi" class="mobile-nav-link" (click)="closeMobileMenu()">
+            <i class="fas fa-truck"></i> Suivi de commande
           </a>
         </nav>
       </div>
@@ -156,6 +172,9 @@ import { FormsModule } from '@angular/forms';
     }
     .header-actions {
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .search-wrap {
       display: flex;
@@ -175,6 +194,8 @@ import { FormsModule } from '@angular/forms';
       font-size: 15px;
       transition: var(--transition);
       flex-shrink: 0;
+      text-decoration: none;
+      position: relative;
     }
     .search-wrap:not(.open) .icon-btn {
       border-radius: 10px;
@@ -191,6 +212,34 @@ import { FormsModule } from '@angular/forms';
     }
     .icon-btn:hover {
       background: var(--beige);
+    }
+    .tracking-btn, .cart-btn {
+      border-radius: 10px;
+    }
+    .cart-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .mobile-cart-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
     }
     .search-wrap input {
       height: 42px;
@@ -219,6 +268,7 @@ import { FormsModule } from '@angular/forms';
       .logo-subtext { font-size: 7px; letter-spacing: 3px; }
       .search-wrap.open input { width: 150px; }
       .hamburger-btn { display: flex; }
+      .tracking-btn, .cart-btn { width: 38px; height: 38px; font-size: 14px; }
     }
     @media (max-width: 480px) {
       .header-inner { padding: 10px 0; gap: 8px; }
@@ -347,6 +397,11 @@ import { FormsModule } from '@angular/forms';
     .mobile-nav-close:hover {
       background: var(--beige);
     }
+    .mobile-nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 8px 24px;
+    }
     .category-bar {
       display: none;
       background: var(--blanc);
@@ -398,13 +453,20 @@ import { FormsModule } from '@angular/forms';
     }
   `]
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   currentFilter = '';
   searchOpen = false;
   searchTerm = '';
   mobileMenuOpen = false;
+  cartCount = 0;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private cartService: CartService) {}
+
+  ngOnInit() {
+    this.cartService.cart$.subscribe(() => {
+      this.cartCount = this.cartService.getItemCount();
+    });
+  }
 
   toggleSearch() {
     if (this.searchOpen) {

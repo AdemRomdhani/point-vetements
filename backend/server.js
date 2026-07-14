@@ -11,6 +11,9 @@ const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const authRoutes = require('./routes/auth');
 const analyticsRoutes = require('./routes/analytics');
+const configRoutes = require('./routes/config');
+const reviewRoutes = require('./routes/reviews');
+const trackingRoutes = require('./routes/tracking');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,7 +34,7 @@ app.use(cors({
     if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, true);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
@@ -60,9 +63,40 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/config', configRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/tracking', trackingRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API fonctionne' });
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  res.send('User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ' + (FRONTEND_URL || 'https://pointvetements.com') + '/sitemap.xml');
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const { getDb: getDbForSitemap } = require('./db');
+    const db = getDbForSitemap();
+    const result = await db.execute('SELECT _id, dateAjout FROM products WHERE disponible = 1 ORDER BY dateAjout DESC');
+    const baseUrl = FRONTEND_URL || 'https://pointvetements.com';
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    xml += `  <url><loc>${baseUrl}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+
+    result.rows.forEach(row => {
+      xml += `  <url><loc>${baseUrl}/#/produit/${row._id}</loc><lastmod>${row.dateAjout ? new Date(row.dateAjout).toISOString().split('T')[0] : ''}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+    });
+
+    xml += '</urlset>';
+    res.set('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send('Error generating sitemap');
+  }
 });
 
 const multer = require('multer');

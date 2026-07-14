@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const path = require('path');
-const fs = require('fs');
 const { getDb, parseProductRow } = require('../db');
 const auth = require('../middleware/auth');
 const { upload, uploadToImgbb, deleteFromImgbb } = require('../imageUpload');
 
 const productsCache = new Map();
 const PRODUCTS_CACHE_TTL = 60000;
+const MAX_CACHE_SIZE = 100;
 
 function getProductsCache(key) {
   const entry = productsCache.get(key);
@@ -18,6 +17,10 @@ function getProductsCache(key) {
 }
 
 function setProductsCache(key, data) {
+  if (productsCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = productsCache.keys().next().value;
+    productsCache.delete(oldestKey);
+  }
   productsCache.set(key, { data, ts: Date.now() });
 }
 
@@ -187,8 +190,8 @@ router.put('/:id', auth, upload.array('images', 10), async (req, res) => {
     const old = parseProductRow(existing.rows[0]);
     let images = old.images;
 
+    const newImages = [];
     if (req.files && req.files.length > 0) {
-      const newImages = [];
       for (const file of req.files) {
         try {
           const url = await uploadToImgbb(file);
@@ -197,14 +200,13 @@ router.put('/:id', auth, upload.array('images', 10), async (req, res) => {
           console.error('Image upload error:', uploadErr.message);
         }
       }
-      if (newImages.length > 0) {
-        if (d.existingImages) {
-          const existImgs = Array.isArray(d.existingImages) ? d.existingImages : [d.existingImages];
-          images = [...existImgs, ...newImages];
-        } else {
-          images = newImages;
-        }
-      }
+    }
+
+    if (d.existingImages) {
+      const existImgs = Array.isArray(d.existingImages) ? d.existingImages : [d.existingImages];
+      images = [...existImgs, ...newImages];
+    } else if (newImages.length > 0) {
+      images = newImages;
     }
 
     let tailles = old.tailles;

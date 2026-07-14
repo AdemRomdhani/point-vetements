@@ -100,6 +100,18 @@ import { Product } from '../../models/product.model';
           <p>Essayez de modifier vos filtres ou revenez plus tard.</p>
         </div>
 
+        <div class="pagination" *ngIf="totalPages > 1 && !loading">
+          <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1">
+            <i class="fas fa-chevron-left"></i> Precedent
+          </button>
+          <div class="page-numbers">
+            <button *ngFor="let p of getPageNumbers()" class="page-num" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+          </div>
+          <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages">
+            Suivant <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+
         <div class="products-grid" *ngIf="loading">
           <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6,7,8]">
             <div class="skeleton skeleton-image"></div>
@@ -411,6 +423,48 @@ import { Product } from '../../models/product.model';
       .product-stock { font-size: 11px; }
       .section-header h2 { font-size: 20px; }
     }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      background: var(--blanc);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .page-btn:hover:not(:disabled) { background: var(--beige); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-numbers { display: flex; gap: 4px; }
+    .page-num {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      background: var(--blanc);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    .page-num:hover { background: var(--beige); }
+    .page-num.active { background: var(--noir); color: var(--blanc); border-color: var(--noir); }
+    @media (max-width: 480px) {
+      .pagination { gap: 8px; }
+      .page-btn { padding: 8px 14px; font-size: 13px; }
+      .page-num { width: 36px; height: 36px; font-size: 13px; }
+    }
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {
@@ -420,6 +474,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   searchTerm = '';
   sortBy = '';
   currentCategory = '';
+  currentPage = 1;
+  totalPages = 1;
+  totalProducts = 0;
   private filterListener: any;
   private searchListener: any;
 
@@ -429,10 +486,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadProducts();
     this.filterListener = (e: any) => {
       this.currentCategory = e.detail;
+      this.currentPage = 1;
       this.filterProducts();
     };
     this.searchListener = (e: any) => {
       this.searchTerm = e.detail;
+      this.currentPage = 1;
       this.filterProducts();
     };
     window.addEventListener('filter-category', this.filterListener);
@@ -452,10 +511,12 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   loadProducts() {
     this.loading = true;
-    this.productService.getProducts().subscribe({
-      next: (data) => {
-        this.products = data;
-        this.filteredProducts = data;
+    this.productService.getProducts({ page: this.currentPage, limit: 50, sort: 'dateAjout', order: 'desc' }).subscribe({
+      next: (res) => {
+        this.products = res.data;
+        this.filteredProducts = res.data;
+        this.totalProducts = res.pagination?.total || res.data.length;
+        this.totalPages = res.pagination?.pages || 1;
         this.loading = false;
         this.splash.hide();
         if (this.currentCategory) {
@@ -495,6 +556,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.filteredProducts = result;
   }
 
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.loadProducts();
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   getProductPrice(product: Product): number {
     if (product.promotions > 0) {
       return product.prix * (1 - product.promotions / 100);
@@ -531,5 +599,17 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   trackBySize(index: number, size: string): string {
     return size;
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
   }
 }
