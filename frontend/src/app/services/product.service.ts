@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, shareReplay, tap } from 'rxjs';
 import { Product, Review } from '../models/product.model';
 import { environment } from '../../environments/environment';
 
@@ -10,6 +10,9 @@ import { environment } from '../../environments/environment';
 export class ProductService {
   private apiUrl = environment.apiUrl + '/products';
   private baseUrl = environment.baseUrl;
+  private configCache$: Observable<any> | null = null;
+  private productCache = new Map<string, { data: Observable<Product>; expiry: number }>();
+  private readonly CACHE_TTL = 60000;
 
   constructor(private http: HttpClient) {}
 
@@ -30,7 +33,16 @@ export class ProductService {
   }
 
   getProduct(id: string): Observable<Product> {
-    return this.http.get<Product>(`${this.apiUrl}/${id}`);
+    const now = Date.now();
+    const cached = this.productCache.get(id);
+    if (cached && cached.expiry > now) {
+      return cached.data;
+    }
+    const request$ = this.http.get<Product>(`${this.apiUrl}/${id}`).pipe(
+      shareReplay(1)
+    );
+    this.productCache.set(id, { data: request$, expiry: now + this.CACHE_TTL });
+    return request$;
   }
 
   getReviews(productId: string, page: number = 1, limit: number = 10): Observable<any> {
@@ -44,7 +56,12 @@ export class ProductService {
   }
 
   getConfig(): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/config`);
+    if (!this.configCache$) {
+      this.configCache$ = this.http.get(`${environment.apiUrl}/config`).pipe(
+        shareReplay(1)
+      );
+    }
+    return this.configCache$;
   }
 
   getImageUrl(image: string): string {

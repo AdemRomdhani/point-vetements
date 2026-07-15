@@ -5,7 +5,7 @@ import { Observable, timer, map, shareReplay } from 'rxjs';
 export class SplashService {
   private _isReady = false;
 
-  visible$: Observable<boolean> = timer(2200).pipe(
+  visible$: Observable<boolean> = timer(800).pipe(
     map(() => {
       this._isReady = true;
       return false;

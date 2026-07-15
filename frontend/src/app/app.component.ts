@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './components/header/header.component';
 import { SplashService } from './services/splash.service';
+import { slideInAnimation } from './animations/route.animation';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, HeaderComponent, CommonModule],
+  animations: [slideInAnimation],
   template: `
     <div class="splash-overlay" *ngIf="splashVisible" [class.hiding]="splashHiding">
       <div class="splash-logo">
@@ -17,7 +19,7 @@ import { SplashService } from './services/splash.service';
     </div>
 
     <app-header></app-header>
-    <main>
+    <main [@routeAnimation]="getRouteAnimationData()">
       <router-outlet></router-outlet>
     </main>
     <footer class="footer">
@@ -50,6 +52,8 @@ import { SplashService } from './services/splash.service';
   styles: [`
     main {
       min-height: calc(100vh - 160px);
+      position: relative;
+      overflow: hidden;
     }
     .footer {
       background: var(--noir);
@@ -161,7 +165,7 @@ export class AppComponent implements OnInit {
   splashVisible = true;
   splashHiding = false;
 
-  constructor(private splash: SplashService) {}
+  constructor(private splash: SplashService, private router: Router) {}
 
   ngOnInit() {
     this.splash.visible$.subscribe(visible => {
@@ -170,5 +174,9 @@ export class AppComponent implements OnInit {
         setTimeout(() => this.splashVisible = false, 600);
       }
     });
+  }
+
+  getRouteAnimationData() {
+    return this.router.url;
   }
 }
