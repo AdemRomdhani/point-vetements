@@ -44,6 +44,10 @@ import { environment } from '../environments/environment';
             <i class="fas fa-shopping-cart"></i>
             <span>Commandes</span>
           </a>
+          <a routerLink="/avis" routerLinkActive="active" class="nav-item" (click)="closeMobileSidebar()">
+            <i class="fas fa-comments"></i>
+            <span>Avis</span>
+          </a>
           <a [href]="frontendUrl" target="_blank" class="nav-item" (click)="closeMobileSidebar()">
             <i class="fas fa-external-link-alt"></i>
             <span>Voir la boutique</span>

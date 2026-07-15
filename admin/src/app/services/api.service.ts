@@ -43,6 +43,18 @@ export interface Order {
   notes: string;
 }
 
+export interface Review {
+  _id: string;
+  produit_id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  rating: number;
+  commentaire: string;
+  approuve: number;
+  dateReview: string;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
@@ -141,5 +153,16 @@ export class ApiService {
 
   getDashboard(): Observable<any> {
     return this.http.get(`${this.apiUrl}/analytics/dashboard`);
+  }
+
+  getReviews(page: number = 1, limit: number = 20): Observable<PaginatedResponse<Review>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+    return this.http.get<PaginatedResponse<Review>>(`${this.apiUrl}/reviews`, { params });
+  }
+
+  deleteReview(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/reviews/${id}`);
   }
 }
